@@ -14,9 +14,8 @@ siteNav.addEventListener("click", (event) => {
   }
 });
 
-const QUIZ_STATE_KEY = "historia-nicaragua-rondas-v2";
-const QUESTIONS_PER_ROUND = 9;
-const TOTAL_ROUNDS = 32;
+const QUIZ_STATE_KEY = "historia-nicaragua-preguntas-v1";
+const TOTAL_QUESTIONS = 10;
 
 const quizFacts = [
   {
@@ -251,32 +250,20 @@ function shuffle(items) {
   return shuffled;
 }
 
-function createRounds() {
-  if (quizFacts.length !== TOTAL_ROUNDS) {
-    throw new Error(`El juego necesita ${TOTAL_ROUNDS} temas históricos.`);
-  }
+function createQuestions() {
+  const factOrder = shuffle(quizFacts.map((_, index) => index)).slice(0, TOTAL_QUESTIONS);
+  const templateOrder = shuffle(questionTemplates.map((_, index) => index));
 
-  const factOrder = shuffle(quizFacts.map((_, index) => index));
-  const templateOrders = quizFacts.map(() => shuffle(questionTemplates.map((_, index) => index)));
-  const templateCounters = quizFacts.map(() => 0);
+  return factOrder.map((factIndex, questionIndex) => {
+    const fact = quizFacts[factIndex];
+    const templateIndex = templateOrder[questionIndex];
 
-  return Array.from({ length: TOTAL_ROUNDS }, (_, roundIndex) => {
-    const roundFacts = Array.from({ length: QUESTIONS_PER_ROUND }, (_, questionIndex) => (
-      factOrder[(roundIndex * QUESTIONS_PER_ROUND + questionIndex) % TOTAL_ROUNDS]
-    ));
-
-    return shuffle(roundFacts.map((factIndex) => {
-      const fact = quizFacts[factIndex];
-      const templateIndex = templateOrders[factIndex][templateCounters[factIndex]];
-      templateCounters[factIndex] += 1;
-
-      return {
-        id: `${factIndex}-${templateIndex}`,
-        question: questionTemplates[templateIndex](formatClue(fact.clue)),
-        options: fact.options,
-        answer: fact.answer
-      };
-    }));
+    return {
+      id: `${factIndex}-${templateIndex}`,
+      question: questionTemplates[templateIndex](formatClue(fact.clue)),
+      options: fact.options,
+      answer: fact.answer
+    };
   });
 }
 
@@ -285,7 +272,7 @@ function saveQuizState() {
     localStorage.setItem(QUIZ_STATE_KEY, JSON.stringify(quizState));
     storageWarning = "";
   } catch {
-    storageWarning = "No se pudieron guardar las rondas; si recargas, podrían repetirse.";
+    storageWarning = "No se pudo guardar el juego; las preguntas podrían repetirse si recargas.";
   }
 }
 
@@ -294,55 +281,58 @@ function loadQuizState() {
     const savedState = localStorage.getItem(QUIZ_STATE_KEY);
     if (savedState) {
       const parsedState = JSON.parse(savedState);
-      const hasValidRounds = Array.isArray(parsedState.rounds)
-        && parsedState.rounds.length === TOTAL_ROUNDS
-        && parsedState.rounds.every((round) => (
-          Array.isArray(round) && round.length === QUESTIONS_PER_ROUND
-        ));
-      const hasValidRoundIndex = Number.isInteger(parsedState.nextRound)
-        && parsedState.nextRound >= 0
-        && parsedState.nextRound <= TOTAL_ROUNDS;
+      const hasValidQuestions = Array.isArray(parsedState.questions)
+        && parsedState.questions.length === TOTAL_QUESTIONS;
+      if (hasValidQuestions && typeof parsedState.completed === "boolean") {
+        const questions = parsedState.questions.map((question) => {
+          const [factIndex, templateIndex] = String(question.id).split("-").map(Number);
+          if (!Number.isInteger(factIndex) || !Number.isInteger(templateIndex)
+            || !quizFacts[factIndex] || !questionTemplates[templateIndex]) {
+            throw new Error("El juego guardado contiene una pregunta inválida.");
+          }
 
-      if (hasValidRounds && hasValidRoundIndex) {
-        const updatedState = {
-          ...parsedState,
-          rounds: parsedState.rounds.map((round) => round.map((question) => {
-            const [factIndex, templateIndex] = String(question.id).split("-").map(Number);
-            if (!Number.isInteger(factIndex) || !Number.isInteger(templateIndex)
-              || !quizFacts[factIndex] || !questionTemplates[templateIndex]) {
-              return question;
-            }
-
-            return {
-              ...question,
-              question: questionTemplates[templateIndex](formatClue(quizFacts[factIndex].clue))
-            };
-          }))
-        };
-        localStorage.setItem(QUIZ_STATE_KEY, JSON.stringify(updatedState));
-        return updatedState;
+          const fact = quizFacts[factIndex];
+          return {
+            id: question.id,
+            question: questionTemplates[templateIndex](formatClue(fact.clue)),
+            options: fact.options,
+            answer: fact.answer
+          };
+        });
+        const factIds = questions.map((question) => question.id.split("-")[0]);
+        const hasUniqueQuestions = new Set(factIds).size === TOTAL_QUESTIONS;
+        const hasValidScore = Number.isInteger(parsedState.score)
+          && parsedState.score >= 0
+          && parsedState.score <= TOTAL_QUESTIONS;
+        if (hasUniqueQuestions && hasValidScore) {
+          return {
+            questions,
+            completed: parsedState.completed,
+            score: parsedState.score
+          };
+        }
       }
     }
 
-    const newState = { rounds: createRounds(), nextRound: 0 };
+    const newState = { questions: createQuestions(), completed: false, score: 0 };
     localStorage.setItem(QUIZ_STATE_KEY, JSON.stringify(newState));
     return newState;
   } catch {
-    storageWarning = "Este navegador no permite guardar las rondas; podrían repetirse si recargas.";
-    return { rounds: createRounds(), nextRound: 0 };
+    storageWarning = "Este navegador no permite guardar el juego; las preguntas podrían repetirse si recargas.";
+    return { questions: createQuestions(), completed: false, score: 0 };
   }
 }
 
 let quizState = loadQuizState();
 
 function showQuestion() {
-  const round = quizState.rounds[quizState.nextRound];
-  const question = round[currentQuestion];
+  const question = quizState.questions[currentQuestion];
   window.clearInterval(timerInterval);
+  timerInterval = null;
   window.clearTimeout(advanceTimeout);
   answerLocked = false;
   timeRemaining = 10;
-  quizProgress.textContent = `Grupo ${quizState.nextRound + 1} de ${TOTAL_ROUNDS} · Pregunta ${currentQuestion + 1} de ${QUESTIONS_PER_ROUND}`;
+  quizProgress.textContent = `Pregunta ${currentQuestion + 1} de ${TOTAL_QUESTIONS}`;
   quizQuestion.textContent = question.question;
   quizFeedback.textContent = storageWarning;
   quizFeedback.classList.remove("is-correct", "is-incorrect");
@@ -391,8 +381,9 @@ function finishQuestion(selectedAnswer) {
   if (answerLocked) return;
   answerLocked = true;
   window.clearInterval(timerInterval);
+  timerInterval = null;
 
-  const question = quizState.rounds[quizState.nextRound][currentQuestion];
+  const question = quizState.questions[currentQuestion];
   const optionButtons = quizOptions.querySelectorAll("button");
 
   optionButtons.forEach((button) => {
@@ -416,7 +407,7 @@ function finishQuestion(selectedAnswer) {
   }
 
   advanceTimeout = window.setTimeout(() => {
-    if (currentQuestion === QUESTIONS_PER_ROUND - 1) {
+    if (currentQuestion === TOTAL_QUESTIONS - 1) {
       showResult();
       return;
     }
@@ -449,50 +440,32 @@ function showConfetti() {
 
 function showResult() {
   window.clearInterval(timerInterval);
+  timerInterval = null;
   window.clearTimeout(advanceTimeout);
-  const completedGroup = quizState.nextRound + 1;
-  quizState.nextRound += 1;
-  currentQuestion = QUESTIONS_PER_ROUND;
+  quizState.completed = true;
+  quizState.score = score;
   saveQuizState();
 
-  quizProgress.textContent = `Resultado del grupo ${completedGroup} de ${TOTAL_ROUNDS}`;
-  quizQuestion.textContent = `Puntaje: ${score} de ${QUESTIONS_PER_ROUND}`;
+  quizProgress.textContent = "Resultado final";
+  quizQuestion.textContent = `Puntaje: ${score} de ${TOTAL_QUESTIONS}`;
   quizFeedback.classList.remove("is-correct", "is-incorrect");
   quizTimer.hidden = true;
   quizOptions.replaceChildren();
 
-  if (score === QUESTIONS_PER_ROUND) {
-    quizFeedback.textContent = "¡Felicidades! ¡Contestaste las 9 preguntas correctamente!";
+  if (score === TOTAL_QUESTIONS) {
+    quizFeedback.textContent = `¡Felicidades! ¡Contestaste las ${TOTAL_QUESTIONS} preguntas correctamente!`;
     showConfetti();
   } else if (score > 0) {
-    quizFeedback.textContent = `Contestaste ${score} de 9 correctamente. ¡Hasta la próxima!`;
+    quizFeedback.textContent = `Contestaste ${score} de ${TOTAL_QUESTIONS} correctamente. ¡Hasta la próxima!`;
   } else {
     quizFeedback.textContent = "Esta vez no hubo respuestas correctas. ¡Hasta la próxima!";
   }
 
-  if (quizState.nextRound === TOTAL_ROUNDS) {
-    quizFeedback.textContent += " Se completaron los 32 grupos.";
-    quizNext.hidden = true;
-    return;
-  }
-
-  const nextGroupMessage = [
-    `Grupo siguiente: ${quizState.nextRound + 1}. Pasa la compu al siguiente compañero.`,
-    storageWarning
-  ].filter(Boolean).join(" ");
-  quizFeedback.textContent += ` ${nextGroupMessage}`;
-  quizNext.hidden = false;
-  quizNext.textContent = `Siguiente grupo (${quizState.nextRound + 1} de ${TOTAL_ROUNDS}) →`;
+  quizFeedback.textContent += storageWarning ? ` ${storageWarning}` : "";
+  quizNext.hidden = true;
 }
 
-quizNext.addEventListener("click", () => {
-  if (currentQuestion !== QUESTIONS_PER_ROUND || quizState.nextRound >= TOTAL_ROUNDS) return;
-  currentQuestion = 0;
-  score = 0;
-  showQuestion();
-});
-
-if (quizState.nextRound < TOTAL_ROUNDS) {
+if (!quizState.completed) {
   showQuestion();
   if ("IntersectionObserver" in window) {
     const quizObserver = new IntersectionObserver((entries) => {
@@ -501,16 +474,16 @@ if (quizState.nextRound < TOTAL_ROUNDS) {
         quizObserver.disconnect();
         startQuestionTimer();
       }
-    }, { threshold: 0.2 });
+    }, { threshold: 0.01 });
     quizObserver.observe(quizCard);
   } else {
     quizHasStarted = true;
     startQuestionTimer();
   }
 } else {
-  quizProgress.textContent = "Juego terminado";
-  quizQuestion.textContent = "Los 32 grupos ya jugaron.";
-  quizFeedback.textContent = "Se completaron las 288 preguntas de esta computadora.";
+  quizProgress.textContent = "Juego completado";
+  quizQuestion.textContent = "Ya respondiste las 10 preguntas.";
+  quizFeedback.textContent = `Resultado guardado: ${quizState.score} de ${TOTAL_QUESTIONS}.`;
   quizTimer.hidden = true;
   quizOptions.replaceChildren();
   quizNext.hidden = true;
