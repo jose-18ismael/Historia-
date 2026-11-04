@@ -240,6 +240,7 @@ let answerLocked = false;
 let timeRemaining = 10;
 let timerInterval;
 let advanceTimeout;
+let quizHasStarted = false;
 
 function shuffle(items) {
   const shuffled = [...items];
@@ -358,6 +359,12 @@ function showQuestion() {
     button.addEventListener("click", () => checkAnswer(option));
     quizOptions.append(button);
   });
+
+  if (quizHasStarted) startQuestionTimer();
+}
+
+function startQuestionTimer() {
+  if (answerLocked || timerInterval) return;
 
   timerInterval = window.setInterval(() => {
     timeRemaining -= 1;
@@ -487,6 +494,19 @@ quizNext.addEventListener("click", () => {
 
 if (quizState.nextRound < TOTAL_ROUNDS) {
   showQuestion();
+  if ("IntersectionObserver" in window) {
+    const quizObserver = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        quizHasStarted = true;
+        quizObserver.disconnect();
+        startQuestionTimer();
+      }
+    }, { threshold: 0.2 });
+    quizObserver.observe(quizCard);
+  } else {
+    quizHasStarted = true;
+    startQuestionTimer();
+  }
 } else {
   quizProgress.textContent = "Juego terminado";
   quizQuestion.textContent = "Los 32 grupos ya jugaron.";
