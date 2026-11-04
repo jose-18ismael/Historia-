@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
-  <script src="script.js?v=quiz-10-countdown-fix" defer></script>
+  <script src="script.js?v=quiz-start-button" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#contenido">Saltar al contenido</a>
@@ -174,15 +174,21 @@
           <p class="section-lead">Responde estas preguntas para poner a prueba lo que aprendiste.</p>
         </div>
         <div class="quiz-card" id="quizCard">
-          <p class="quiz-progress" id="quizProgress" aria-live="polite"></p>
-          <h3 class="quiz-question" id="quizQuestion"></h3>
-          <div class="quiz-timer" id="quizTimer" role="timer" aria-label="Tiempo restante">
-            <span class="quiz-timer-label" id="quizTimerLabel">10 segundos</span>
-            <span class="quiz-timer-track" aria-hidden="true"><span class="quiz-timer-bar" id="quizTimerBar"></span></span>
+          <div class="quiz-intro" id="quizIntro">
+            <p>Son 10 preguntas aleatorias. Tendrás 10 segundos para responder cada una.</p>
+            <button class="button button-dark" id="quizStart" type="button">Iniciar juego →</button>
           </div>
-          <div class="quiz-options" id="quizOptions"></div>
-          <p class="quiz-feedback" id="quizFeedback" aria-live="polite"></p>
-          <button class="button button-dark quiz-next" id="quizNext" type="button" hidden>Siguiente pregunta →</button>
+          <div id="quizPlayArea" hidden>
+            <p class="quiz-progress" id="quizProgress" aria-live="polite"></p>
+            <h3 class="quiz-question" id="quizQuestion"></h3>
+            <div class="quiz-timer" id="quizTimer" role="timer" aria-label="Tiempo restante">
+              <span class="quiz-timer-label" id="quizTimerLabel">10 segundos</span>
+              <span class="quiz-timer-track" aria-hidden="true"><span class="quiz-timer-bar" id="quizTimerBar"></span></span>
+            </div>
+            <div class="quiz-options" id="quizOptions"></div>
+            <p class="quiz-feedback" id="quizFeedback" aria-live="polite"></p>
+            <button class="button button-dark quiz-next" id="quizNext" type="button" hidden>Siguiente pregunta →</button>
+          </div>
         </div>
       </div>
     </section>

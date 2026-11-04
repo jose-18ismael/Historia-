@@ -233,6 +233,9 @@ const quizTimerBar = document.querySelector("#quizTimerBar");
 const quizOptions = document.querySelector("#quizOptions");
 const quizFeedback = document.querySelector("#quizFeedback");
 const quizNext = document.querySelector("#quizNext");
+const quizIntro = document.querySelector("#quizIntro");
+const quizStart = document.querySelector("#quizStart");
+const quizPlayArea = document.querySelector("#quizPlayArea");
 let currentQuestion = 0;
 let score = 0;
 let storageWarning = "";
@@ -240,7 +243,6 @@ let answerLocked = false;
 let timeRemaining = 10;
 let timerInterval;
 let advanceTimeout;
-let quizHasStarted = false;
 
 function shuffle(items) {
   const shuffled = [...items];
@@ -351,7 +353,7 @@ function showQuestion() {
     quizOptions.append(button);
   });
 
-  if (quizHasStarted) startQuestionTimer();
+  startQuestionTimer();
 }
 
 function startQuestionTimer() {
@@ -466,22 +468,18 @@ function showResult() {
   quizNext.hidden = true;
 }
 
-if (!quizState.completed) {
+quizStart.addEventListener("click", () => {
+  quizIntro.hidden = true;
+  quizPlayArea.hidden = false;
   showQuestion();
-  if ("IntersectionObserver" in window) {
-    const quizObserver = new IntersectionObserver((entries) => {
-      if (entries.some((entry) => entry.isIntersecting)) {
-        quizHasStarted = true;
-        quizObserver.disconnect();
-        startQuestionTimer();
-      }
-    }, { threshold: 0.01 });
-    quizObserver.observe(quizCard);
-  } else {
-    quizHasStarted = true;
-    startQuestionTimer();
-  }
+});
+
+if (!quizState.completed) {
+  quizIntro.hidden = false;
+  quizPlayArea.hidden = true;
 } else {
+  quizIntro.hidden = true;
+  quizPlayArea.hidden = false;
   quizProgress.textContent = "Juego completado";
   quizQuestion.textContent = "Ya respondiste las 10 preguntas.";
   quizFeedback.textContent = `Resultado guardado: ${quizState.score} de ${TOTAL_QUESTIONS}.`;

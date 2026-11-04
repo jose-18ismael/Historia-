@@ -662,6 +662,16 @@ blockquote {
   box-shadow: 0 14px 34px rgba(23, 42, 58, .06);
 }
 
+.quiz-intro p {
+  margin: 0 0 1.25rem;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.quiz-intro .button {
+  width: 100%;
+}
+
 .quiz-progress {
   margin-bottom: .8rem;
   color: var(--blue);
