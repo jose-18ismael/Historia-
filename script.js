@@ -14,7 +14,7 @@ siteNav.addEventListener("click", (event) => {
   }
 });
 
-const QUIZ_STATE_KEY = "historia-nicaragua-preguntas-v1";
+const QUIZ_STATE_KEY = "historia-nicaragua-preguntas-v2";
 const TOTAL_QUESTIONS = 10;
 
 const quizFacts = [
@@ -189,7 +189,8 @@ const questionTemplates = [
   (clue) => `¿Qué aspecto histórico se relaciona con ${clue}?`,
   (clue) => `¿Qué dato permite explicar ${clue}?`,
   (clue) => `¿Qué información histórica corresponde a ${clue}?`,
-  (clue) => `¿Qué tema de la historia de Nicaragua describe ${clue}?`
+  (clue) => `¿Qué tema de la historia de Nicaragua describe ${clue}?`,
+  (clue) => `¿Qué respuesta identifica ${clue}?`
 ];
 
 const clueArticles = new Map([
