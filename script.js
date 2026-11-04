@@ -182,16 +182,48 @@ const quizFacts = [
 ];
 
 const questionTemplates = [
-  (clue) => `¿Qué respuesta corresponde a esta pista histórica: ${clue}?`,
-  (clue) => `Resuelve esta pista de historia: ${clue}.`,
-  (clue) => `¿Qué dato completa correctamente esta información: ${clue}?`,
-  (clue) => `Selecciona la opción que coincide con este dato: ${clue}.`,
-  (clue) => `¿Cuál nombre, fecha o idea corresponde a la siguiente pista: ${clue}?`,
-  (clue) => `Entre las opciones, elige la que responde a esta pista: ${clue}.`,
-  (clue) => `Identifica la respuesta relacionada con este hecho: ${clue}.`,
-  (clue) => `Completa correctamente el dato histórico: ${clue}.`,
-  (clue) => `¿Cuál opción describe mejor el dato señalado: ${clue}?`
+  (clue) => `¿Qué dato histórico se relaciona con ${clue}?`,
+  (clue) => `¿Qué información se conoce sobre ${clue}?`,
+  (clue) => `¿Cuál es el hecho histórico relacionado con ${clue}?`,
+  (clue) => `¿Qué hecho histórico se vincula con ${clue}?`,
+  (clue) => `¿Qué acontecimiento se asocia con ${clue}?`,
+  (clue) => `¿Qué aspecto histórico se relaciona con ${clue}?`,
+  (clue) => `¿Qué dato permite explicar ${clue}?`,
+  (clue) => `¿Qué información histórica corresponde a ${clue}?`,
+  (clue) => `¿Qué tema de la historia de Nicaragua describe ${clue}?`
 ];
+
+const clueArticles = new Map([
+  ["día", "el"],
+  ["año", "el"],
+  ["movimiento", "el"],
+  ["organización", "la"],
+  ["presidente", "el"],
+  ["campaña", "la"],
+  ["gobierno", "el"],
+  ["período", "el"],
+  ["objetivo", "el"],
+  ["comunidades", "las"],
+  ["grupo", "el"],
+  ["relación", "la"],
+  ["idiomas", "los"],
+  ["cambio", "el"],
+  ["reformas", "las"],
+  ["partido", "el"],
+  ["conflicto", "el"],
+  ["otra", "la"],
+  ["propósito", "el"],
+  ["familia", "la"],
+  ["líder", "el"],
+  ["intervención", "la"],
+  ["servicios", "los"]
+]);
+
+function formatClue(clue) {
+  const firstWord = clue.split(" ", 1)[0].toLocaleLowerCase("es");
+  const article = clueArticles.get(firstWord);
+  return article ? `${article} ${clue}` : clue;
+}
 
 const quizProgress = document.querySelector("#quizProgress");
 const quizQuestion = document.querySelector("#quizQuestion");
@@ -201,6 +233,7 @@ const quizNext = document.querySelector("#quizNext");
 let currentQuestion = 0;
 let score = 0;
 let storageWarning = "";
+let answerLocked = false;
 
 function shuffle(items) {
   const shuffled = [...items];
@@ -232,7 +265,7 @@ function createRounds() {
 
       return {
         id: `${factIndex}-${templateIndex}`,
-        question: questionTemplates[templateIndex](fact.clue),
+        question: questionTemplates[templateIndex](formatClue(fact.clue)),
         options: fact.options,
         answer: fact.answer
       };
@@ -263,7 +296,25 @@ function loadQuizState() {
         && parsedState.nextRound >= 0
         && parsedState.nextRound <= TOTAL_ROUNDS;
 
-      if (hasValidRounds && hasValidRoundIndex) return parsedState;
+      if (hasValidRounds && hasValidRoundIndex) {
+        const updatedState = {
+          ...parsedState,
+          rounds: parsedState.rounds.map((round) => round.map((question) => {
+            const [factIndex, templateIndex] = String(question.id).split("-").map(Number);
+            if (!Number.isInteger(factIndex) || !Number.isInteger(templateIndex)
+              || !quizFacts[factIndex] || !questionTemplates[templateIndex]) {
+              return question;
+            }
+
+            return {
+              ...question,
+              question: questionTemplates[templateIndex](formatClue(quizFacts[factIndex].clue))
+            };
+          }))
+        };
+        localStorage.setItem(QUIZ_STATE_KEY, JSON.stringify(updatedState));
+        return updatedState;
+      }
     }
 
     const newState = { rounds: createRounds(), nextRound: 0 };
@@ -280,6 +331,7 @@ let quizState = loadQuizState();
 function showQuestion() {
   const round = quizState.rounds[quizState.nextRound];
   const question = round[currentQuestion];
+  answerLocked = false;
   quizProgress.textContent = `Grupo ${quizState.nextRound + 1} de ${TOTAL_ROUNDS} · Pregunta ${currentQuestion + 1} de ${QUESTIONS_PER_ROUND}`;
   quizQuestion.textContent = question.question;
   quizFeedback.textContent = storageWarning;
@@ -297,6 +349,9 @@ function showQuestion() {
 }
 
 function checkAnswer(selectedAnswer) {
+  if (answerLocked) return;
+  answerLocked = true;
+
   const question = quizState.rounds[quizState.nextRound][currentQuestion];
   const optionButtons = quizOptions.querySelectorAll("button");
 
@@ -308,52 +363,40 @@ function checkAnswer(selectedAnswer) {
     }
   });
 
-  if (selectedAnswer === question.answer) {
-    score += 1;
-    quizFeedback.textContent = "¡Correcto! Muy bien.";
-  } else {
-    quizFeedback.textContent = `No es esa. La respuesta correcta es: ${question.answer}.`;
+  if (selectedAnswer === question.answer) score += 1;
+
+  if (currentQuestion === QUESTIONS_PER_ROUND - 1) {
+    showResult();
+    return;
   }
 
-  quizNext.hidden = false;
-  if (currentQuestion === QUESTIONS_PER_ROUND - 1) {
-    quizNext.textContent = "Ver resultado";
-  } else {
-    quizNext.textContent = "Siguiente pregunta →";
-  }
+  currentQuestion += 1;
+  showQuestion();
 }
 
 function showResult() {
-  quizProgress.textContent = `Resultado del grupo ${quizState.nextRound + 1} de ${TOTAL_ROUNDS}`;
+  const completedGroup = quizState.nextRound + 1;
+  quizState.nextRound += 1;
+  currentQuestion = QUESTIONS_PER_ROUND;
+  saveQuizState();
+
+  quizProgress.textContent = `Resultado del grupo ${completedGroup} de ${TOTAL_ROUNDS}`;
   quizQuestion.textContent = `Puntaje: ${score} de ${QUESTIONS_PER_ROUND}`;
   quizOptions.replaceChildren();
 
-  if (quizState.nextRound === TOTAL_ROUNDS - 1) {
+  if (quizState.nextRound === TOTAL_ROUNDS) {
     quizFeedback.textContent = "¡Se completaron los 32 grupos y las 288 preguntas sin repetir!";
     quizNext.hidden = true;
     return;
   }
 
-  quizFeedback.textContent = `Grupo siguiente: ${quizState.nextRound + 2}. Pasa la compu al siguiente compañero. ${storageWarning}`.trim();
+  quizFeedback.textContent = `Grupo siguiente: ${quizState.nextRound + 1}. Pasa la compu al siguiente compañero. ${storageWarning}`.trim();
   quizNext.hidden = false;
-  quizNext.textContent = `Siguiente grupo (${quizState.nextRound + 2} de ${TOTAL_ROUNDS}) →`;
+  quizNext.textContent = `Siguiente grupo (${quizState.nextRound + 1} de ${TOTAL_ROUNDS}) →`;
 }
 
 quizNext.addEventListener("click", () => {
-  if (currentQuestion < QUESTIONS_PER_ROUND - 1) {
-    currentQuestion += 1;
-    showQuestion();
-    return;
-  }
-
-  if (currentQuestion === QUESTIONS_PER_ROUND - 1) {
-    showResult();
-    currentQuestion += 1;
-    return;
-  }
-
-  quizState.nextRound += 1;
-  saveQuizState();
+  if (currentQuestion !== QUESTIONS_PER_ROUND || quizState.nextRound >= TOTAL_ROUNDS) return;
   currentQuestion = 0;
   score = 0;
   showQuestion();
