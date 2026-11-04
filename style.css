@@ -737,6 +737,132 @@ blockquote {
   display: none;
 }
 
+.registration-main {
+  display: grid;
+  min-height: calc(100vh - 146px);
+  place-items: center;
+  padding: 4rem 6%;
+  background:
+    radial-gradient(ellipse at 10% 10%, rgba(233, 182, 90, .14), transparent 35%),
+    var(--paper);
+}
+
+.registration-card {
+  width: min(100%, 620px);
+  padding: clamp(1.4rem, 5vw, 3rem);
+  background: var(--white);
+  box-shadow: 0 16px 45px rgba(23, 42, 58, .08);
+}
+
+.registration-card h1 {
+  margin-bottom: .8rem;
+  color: var(--navy);
+  font-size: clamp(2.1rem, 6vw, 3.2rem);
+}
+
+.registration-intro {
+  margin-bottom: 1.5rem;
+  color: var(--muted);
+  line-height: 1.75;
+}
+
+.privacy-notice {
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.1rem;
+  border-left: 3px solid var(--gold);
+  background: #f7f5ef;
+  font-size: .88rem;
+  line-height: 1.65;
+}
+
+.privacy-notice strong {
+  color: var(--navy);
+}
+
+.privacy-notice p {
+  margin: .35rem 0 0;
+  color: var(--muted);
+}
+
+.registration-form {
+  display: grid;
+  gap: .65rem;
+}
+
+.registration-form > label:not(.consent-label) {
+  margin-top: .35rem;
+  color: var(--ink);
+  font-size: .88rem;
+  font-weight: 700;
+}
+
+.registration-form > input {
+  width: 100%;
+  min-height: 48px;
+  padding: .7rem .8rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: white;
+  color: var(--ink);
+  font: inherit;
+}
+
+.registration-form > input:disabled {
+  background: #f0efeb;
+  color: #777;
+  cursor: not-allowed;
+}
+
+.consent-label {
+  display: flex;
+  align-items: flex-start;
+  gap: .7rem;
+  margin: .7rem 0;
+  color: var(--muted);
+  font-size: .83rem;
+  line-height: 1.6;
+}
+
+.consent-label input {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  margin: .15rem 0 0;
+  accent-color: var(--blue);
+}
+
+.registration-submit {
+  justify-self: start;
+}
+
+.registration-submit:disabled {
+  opacity: .58;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.registration-status {
+  min-height: 2.8rem;
+  margin: .25rem 0 0;
+  color: var(--muted);
+  font-size: .85rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.registration-back {
+  display: inline-block;
+  margin-top: 1rem;
+  color: var(--blue);
+  font-size: .88rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.registration-back:hover {
+  text-decoration: underline;
+}
+
 .site-footer {
   display: flex;
   align-items: center;
@@ -934,6 +1060,15 @@ blockquote {
 
   .quiz-card {
     padding: 1.4rem;
+  }
+
+  .registration-main {
+    min-height: calc(100vh - 134px);
+    padding: 2rem 6%;
+  }
+
+  .registration-submit {
+    width: 100%;
   }
 
   .sources-inner {

@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Registro voluntario de participación en la exposición de historia.">
+  <title>Registro de participación · Historia de Nicaragua</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js" defer></script>
+  <script src="registro.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#contenido">Saltar al contenido</a>
+  <header class="site-header">
+    <a class="brand" href="index.html">
+      <span class="brand-mark" aria-hidden="true">N</span>
+      <span>Historia de Nicaragua</span>
+    </a>
+    <button class="menu-toggle" id="menuToggle" type="button" aria-expanded="false" aria-controls="siteNav">
+      Menú
+    </button>
+    <nav class="site-nav" id="siteNav" aria-label="Navegación principal">
+      <a href="index.html#contexto">Contexto</a>
+      <a href="index.html#cambios">Cambios</a>
+      <a href="index.html#linea-tiempo">Línea del tiempo</a>
+      <a href="index.html#juego">Juego</a>
+    </nav>
+  </header>
+
+  <main class="registration-main" id="contenido">
+    <section class="registration-card" aria-labelledby="registrationTitle">
+      <p class="eyebrow">Exposición de historia · Nicaragua</p>
+      <h1 id="registrationTitle">Registro de participación</h1>
+      <p class="registration-intro">Escribe tu nombre y apellido para que el profesor pueda registrar tu participación en la actividad.</p>
+
+      <div class="privacy-notice">
+        <strong>Antes de continuar</strong>
+        <p>Al enviar este formulario, EmailJS enviará tu nombre y apellido por correo al profesor únicamente para llevar el registro de participación. Esta página no guarda esos datos. No continúes si no estás de acuerdo.</p>
+      </div>
+
+      <form class="registration-form" id="registrationForm">
+        <label for="firstName">Nombre</label>
+        <input id="firstName" name="first_name" type="text" autocomplete="given-name" minlength="2" maxlength="60" required disabled>
+
+        <label for="lastName">Apellido</label>
+        <input id="lastName" name="last_name" type="text" autocomplete="family-name" minlength="2" maxlength="60" required disabled>
+
+        <label class="consent-label">
+          <input id="consent" name="consent" type="checkbox" required disabled>
+          <span>Entiendo que EmailJS enviará mi nombre y apellido al profesor para registrar mi participación.</span>
+        </label>
+
+        <button class="button button-dark registration-submit" id="registrationSubmit" type="submit" disabled>Registrar participación</button>
+        <p class="registration-status" id="registrationStatus" role="status" aria-live="polite">El formulario aún no está conectado al servicio de correo. No escribas tus datos todavía.</p>
+      </form>
+
+      <a class="registration-back" href="index.html">← Volver a la presentación</a>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>Trabajo de historia · <strong>Jose Ismael Perez Mayorga</strong></p>
+    <a href="index.html">Volver a la presentación ↑</a>
+  </footer>
+</body>
+</html>
