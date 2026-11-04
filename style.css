@@ -19,6 +19,7 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: clip;
 }
 
 body {
@@ -29,6 +30,10 @@ body {
 
 a {
   color: inherit;
+}
+
+img {
+  max-width: 100%;
 }
 
 .skip-link {
@@ -279,6 +284,15 @@ h1 em {
 .section {
   width: min(1120px, 84%);
   margin: 0 auto;
+}
+
+.intro-section > *,
+.intro-content > *,
+.timeline-layout > *,
+.script-section > *,
+.sources-inner > *,
+.change-card {
+  min-width: 0;
 }
 
 .intro-section {
@@ -702,6 +716,14 @@ blockquote {
   cursor: default;
 }
 
+.quiz-question,
+.quiz-feedback,
+.quiz-option,
+.source-list a,
+blockquote {
+  overflow-wrap: anywhere;
+}
+
 .quiz-feedback {
   min-height: 1.5rem;
   margin: 1rem 0 .3rem;
@@ -750,6 +772,10 @@ blockquote {
     padding-left: 7%;
   }
 
+  .hero {
+    grid-template-columns: minmax(0, 1.12fr) minmax(0, .88fr);
+  }
+
   .change-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -759,7 +785,7 @@ blockquote {
   }
 }
 
-@media (max-width: 680px) {
+@media (max-width: 800px) {
   .site-header {
     min-height: 68px;
     padding: 0 6%;
@@ -791,11 +817,41 @@ blockquote {
     min-height: 44px;
     border-bottom: 1px solid var(--line);
   }
+}
 
+@media (min-width: 681px) and (max-width: 800px) {
   .hero {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2rem;
+    min-height: 0;
+    padding: 4rem 7%;
+  }
+
+  .hero-copy {
+    max-width: 650px;
+  }
+
+  .hero-image {
+    width: min(100%, 520px);
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 680px) {
+  .hero {
+    grid-template-columns: minmax(0, 1fr);
     gap: 2.5rem;
-    padding: 4.5rem 7% 4rem;
+    min-height: 0;
+    padding: 4.5rem 6% 4rem;
+  }
+
+  h1 {
+    font-size: clamp(2.2rem, 10vw, 3.2rem);
+  }
+
+  .hero-copy,
+  .hero-image {
+    min-width: 0;
   }
 
   .hero-image {
@@ -808,7 +864,7 @@ blockquote {
   }
 
   .section {
-    width: 86%;
+    width: 88%;
   }
 
   .intro-section,
@@ -860,7 +916,7 @@ blockquote {
 
   .highlight-section {
     gap: 1rem;
-    padding: 3.5rem 7%;
+    padding: 3.5rem 6%;
   }
 
   .highlight-mark {
@@ -889,7 +945,42 @@ blockquote {
     align-items: flex-start;
     gap: .8rem;
     flex-direction: column;
-    padding: 1.3rem 7%;
+    padding: 1.3rem 6%;
+  }
+}
+
+@media (max-width: 360px) {
+  .brand {
+    gap: .45rem;
+    font-size: .78rem;
+  }
+
+  .brand-mark {
+    width: 31px;
+    height: 31px;
+  }
+
+  .hero-decoration {
+    right: 3%;
+    font-size: 2.8rem;
+  }
+
+  .timeline-item {
+    grid-template-columns: 3.5rem minmax(0, 1fr);
+    gap: .9rem;
+  }
+
+  .timeline-year {
+    width: 3.4rem;
+    font-size: .73rem;
+  }
+
+  .timeline-list::before {
+    left: 2.7rem;
+  }
+
+  .quiz-card {
+    padding: 1.1rem;
   }
 }
 
