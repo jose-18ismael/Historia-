@@ -227,6 +227,9 @@ function formatClue(clue) {
 
 const quizProgress = document.querySelector("#quizProgress");
 const quizQuestion = document.querySelector("#quizQuestion");
+const quizTimer = document.querySelector("#quizTimer");
+const quizTimerLabel = document.querySelector("#quizTimerLabel");
+const quizTimerBar = document.querySelector("#quizTimerBar");
 const quizOptions = document.querySelector("#quizOptions");
 const quizFeedback = document.querySelector("#quizFeedback");
 const quizNext = document.querySelector("#quizNext");
@@ -234,6 +237,9 @@ let currentQuestion = 0;
 let score = 0;
 let storageWarning = "";
 let answerLocked = false;
+let timeRemaining = 10;
+let timerInterval;
+let advanceTimeout;
 
 function shuffle(items) {
   const shuffled = [...items];
@@ -331,12 +337,18 @@ let quizState = loadQuizState();
 function showQuestion() {
   const round = quizState.rounds[quizState.nextRound];
   const question = round[currentQuestion];
+  window.clearInterval(timerInterval);
+  window.clearTimeout(advanceTimeout);
   answerLocked = false;
+  timeRemaining = 10;
   quizProgress.textContent = `Grupo ${quizState.nextRound + 1} de ${TOTAL_ROUNDS} · Pregunta ${currentQuestion + 1} de ${QUESTIONS_PER_ROUND}`;
   quizQuestion.textContent = question.question;
   quizFeedback.textContent = storageWarning;
+  quizFeedback.classList.remove("is-correct", "is-incorrect");
+  quizTimer.hidden = false;
   quizNext.hidden = true;
   quizOptions.replaceChildren();
+  updateTimer();
 
   shuffle(question.options).forEach((option) => {
     const button = document.createElement("button");
@@ -346,11 +358,32 @@ function showQuestion() {
     button.addEventListener("click", () => checkAnswer(option));
     quizOptions.append(button);
   });
+
+  timerInterval = window.setInterval(() => {
+    timeRemaining -= 1;
+    updateTimer();
+
+    if (timeRemaining <= 0) {
+      finishQuestion(null);
+    }
+  }, 1000);
+}
+
+function updateTimer() {
+  quizTimerLabel.textContent = `${timeRemaining} ${timeRemaining === 1 ? "segundo" : "segundos"}`;
+  quizTimerBar.style.transform = `scaleX(${timeRemaining / 10})`;
+  quizTimer.classList.toggle("is-urgent", timeRemaining <= 3);
 }
 
 function checkAnswer(selectedAnswer) {
   if (answerLocked) return;
+  finishQuestion(selectedAnswer);
+}
+
+function finishQuestion(selectedAnswer) {
+  if (answerLocked) return;
   answerLocked = true;
+  window.clearInterval(timerInterval);
 
   const question = quizState.rounds[quizState.nextRound][currentQuestion];
   const optionButtons = quizOptions.querySelectorAll("button");
@@ -363,18 +396,53 @@ function checkAnswer(selectedAnswer) {
     }
   });
 
-  if (selectedAnswer === question.answer) score += 1;
-
-  if (currentQuestion === QUESTIONS_PER_ROUND - 1) {
-    showResult();
-    return;
+  if (selectedAnswer === null) {
+    quizFeedback.textContent = `Se acabó el tiempo. La respuesta correcta era: ${question.answer}.`;
+    quizFeedback.classList.add("is-incorrect");
+  } else if (selectedAnswer === question.answer) {
+    score += 1;
+    quizFeedback.textContent = "¡Correcto! Muy bien.";
+    quizFeedback.classList.add("is-correct");
+  } else {
+    quizFeedback.textContent = `Respuesta incorrecta. La respuesta correcta era: ${question.answer}.`;
+    quizFeedback.classList.add("is-incorrect");
   }
 
-  currentQuestion += 1;
-  showQuestion();
+  advanceTimeout = window.setTimeout(() => {
+    if (currentQuestion === QUESTIONS_PER_ROUND - 1) {
+      showResult();
+      return;
+    }
+
+    currentQuestion += 1;
+    showQuestion();
+  }, selectedAnswer === null ? 1800 : 900);
+}
+
+function showConfetti() {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  const colors = ["#e9b65a", "#287b91", "#3e8c67", "#bd6e5c", "#ffffff"];
+  const pieces = Array.from({ length: 60 }, () => {
+    const piece = document.createElement("span");
+    piece.className = "confetti-piece";
+    piece.style.setProperty("--confetti-color", colors[Math.floor(Math.random() * colors.length)]);
+    piece.style.setProperty("--confetti-x", `${Math.random() * 100}vw`);
+    piece.style.setProperty("--confetti-delay", `${Math.random() * 0.6}s`);
+    piece.style.setProperty("--confetti-duration", `${2 + Math.random() * 1.5}s`);
+    return piece;
+  });
+  const confetti = document.createElement("div");
+  confetti.className = "confetti";
+  confetti.setAttribute("aria-hidden", "true");
+  confetti.append(...pieces);
+  document.body.append(confetti);
+  window.setTimeout(() => confetti.remove(), 4500);
 }
 
 function showResult() {
+  window.clearInterval(timerInterval);
+  window.clearTimeout(advanceTimeout);
   const completedGroup = quizState.nextRound + 1;
   quizState.nextRound += 1;
   currentQuestion = QUESTIONS_PER_ROUND;
@@ -382,15 +450,30 @@ function showResult() {
 
   quizProgress.textContent = `Resultado del grupo ${completedGroup} de ${TOTAL_ROUNDS}`;
   quizQuestion.textContent = `Puntaje: ${score} de ${QUESTIONS_PER_ROUND}`;
+  quizFeedback.classList.remove("is-correct", "is-incorrect");
+  quizTimer.hidden = true;
   quizOptions.replaceChildren();
 
+  if (score === QUESTIONS_PER_ROUND) {
+    quizFeedback.textContent = "¡Felicidades! ¡Contestaste las 9 preguntas correctamente!";
+    showConfetti();
+  } else if (score > 0) {
+    quizFeedback.textContent = `Contestaste ${score} de 9 correctamente. ¡Hasta la próxima!`;
+  } else {
+    quizFeedback.textContent = "Esta vez no hubo respuestas correctas. ¡Hasta la próxima!";
+  }
+
   if (quizState.nextRound === TOTAL_ROUNDS) {
-    quizFeedback.textContent = "¡Se completaron los 32 grupos y las 288 preguntas sin repetir!";
+    quizFeedback.textContent += " Se completaron los 32 grupos.";
     quizNext.hidden = true;
     return;
   }
 
-  quizFeedback.textContent = `Grupo siguiente: ${quizState.nextRound + 1}. Pasa la compu al siguiente compañero. ${storageWarning}`.trim();
+  const nextGroupMessage = [
+    `Grupo siguiente: ${quizState.nextRound + 1}. Pasa la compu al siguiente compañero.`,
+    storageWarning
+  ].filter(Boolean).join(" ");
+  quizFeedback.textContent += ` ${nextGroupMessage}`;
   quizNext.hidden = false;
   quizNext.textContent = `Siguiente grupo (${quizState.nextRound + 1} de ${TOTAL_ROUNDS}) →`;
 }
@@ -408,6 +491,7 @@ if (quizState.nextRound < TOTAL_ROUNDS) {
   quizProgress.textContent = "Juego terminado";
   quizQuestion.textContent = "Los 32 grupos ya jugaron.";
   quizFeedback.textContent = "Se completaron las 288 preguntas de esta computadora.";
+  quizTimer.hidden = true;
   quizOptions.replaceChildren();
   quizNext.hidden = true;
 }
